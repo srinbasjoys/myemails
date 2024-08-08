@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Verification Upload</title>
+</head>
+<body>
+    <h1>Email Verification Upload</h1>
+
+    <form id="upload-form">
+        <input type="file" name="file" accept=".csv">
+        <button type="submit">Upload and Verify</button>
+    </form>
+
+    <div id="response-message"></div>
+
+    <script>
+        document.getElementById("upload-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            var formData = new FormData();
+            formData.append("file", document.querySelector('input[type="file"]').files[0]);
+
+            fetch("http://127.0.0.1:8000/api/bulk/email-finder/", {
+                method: "POST",
+                body: formData,
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    var responseMessage = document.getElementById("response-message");
+                    if (data.error) {
+                        responseMessage.innerText = "Error: " + data.error;
+                    } else {
+                        responseMessage.innerText = "Upload successful. CSV processing in progress.";
+                    }
+                })
+                .catch(function (error) {
+                    var responseMessage = document.getElementById("response-message");
+                    responseMessage.innerText = "Error: " + error.message;
+                });
+        });
+    </script>
+</body>
+</html>

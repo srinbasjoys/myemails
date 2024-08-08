@@ -1,0 +1,6 @@
+<!-- email_finder/templates/csv_upload_form.html -->
+<form method="post" action="{% url 'process-csv' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="csv_file" accept=".csv">
+    <button type="submit">Process CSV</button>
+</form>

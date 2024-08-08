@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>MJ EMAIL FINDER && VERIFIER</title>
+    <style>
+        body {
+            background-color: #E7E7E9;
+            color: #193058;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background-color: #193058;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #193058;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+        }
+        .logo {
+            width: 200px;
+            height: 100px;
+            margin-right: 10px;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .section {
+            width: 48%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .loader {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            width: 100%;
+            height: 100%;
+            background: rgba(114, 113, 113, 0.7) url('{% static "Processing.gif" %}') no-repeat center;
+        }
+        .upload-container {
+            display: flex;
+            align-items: center;
+        }
+        h3 {
+        font-size: 10px;
+        font-family: Arial, sans-serif; 
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="navbar">
+        <img src="{% static 'mj-3.png' %}" alt="Logo">
+        <!-- Add links or navigation items in your navbar if needed -->
+    </div>
+    <div class="container">
+        <div class="section">
+            <h1>Bulk Finder</h1>
+            <!-- File Upload for Bulk Verify Emails -->
+            <h2>Upload File for Bulk Find Emails</h2>
+            <h3>Ensure the file contains FirstName,LastName,Domain in columns names</h3>
+            <div class="upload-container">
+                <input type="file" id="bulkFindEmailFile" accept=".csv">
+                <button id="bulkFindUploadButton" onclick="uploadBulkFindEmails()">Upload</button>
+                <div class="loader" id="loader"></div> <!-- The loader element -->
+            </div>
+
+            
+            <a id="bulkFindEmailResponse" href="#" style="display: none;">Download Results</a>
+        </div>
+
+        <div class="section">
+            <h1>Bulk Verifier</h1>
+            <!-- File Upload for Bulk Find Emails -->
+            <h2>Upload File for Bulk Verify Emails</h2>
+            <h3>Ensure the file contains Email in column name</h3>
+            <div class="upload-container">    
+                <input type="file" id="bulkVerifyEmailFile" accept=".csv">
+                <button id="bulkVerifyUploadButton" onclick="uploadBulkVerifyEmails()">Upload</button>
+                <div class="loader" id="loader"></div> <!-- The loader element -->
+            </div>
+            
+            <a id="bulkVerifyEmailResponse" href="#" style="display: none;">Download Response</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h1>Single Finder</h1>
+            <!-- Input Fields for Single Email Finder -->
+            <h2>Enter First Name, Last Name, and Domain</h2>
+            <input type="text" id="singleFirstName" placeholder="First Name">
+            <input type="text" id="singleLastName" placeholder="Last Name">
+            <input type="text" id="singleDomain" placeholder="Domain">
+            <button id= "singlefindbutton" onclick="findSingleEmail()">Find</button>
+            <a id="singleEmailFinderResponse"></a>
+        </div>
+
+        <div class="section">
+            <h1>Single Verifier</h1>
+            <!-- Input Field for Single Email Verification -->
+            <h2>Enter Email for Single Verification</h2>
+            <input type="text" id="singleEmail">
+            <button id= "singleverifybutton" onclick="verifySingleEmail()">Verify</button>
+            <a id="singleEmailResponse"></a>
+        </div>
+
+        <div class="footer">
+            &copy; 2023 MarketJoy Inc.
+        </div>
+    </div>
+
+    <script>
+
+        function showLoader() {
+            const loader = document.getElementById('loader');
+            loader.style.display = 'block';
+        }
+
+        // Hide loader function
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            loader.style.display = 'none';
+        }
+        // Function to send a POST request for Bulk Verify Emails
+        function uploadBulkVerifyEmails() {
+            const fileInput = document.getElementById("bulkVerifyEmailFile");
+            const responseLink = document.getElementById("bulkVerifyEmailResponse");
+            const uploadButton = document.getElementById("bulkVerifyUploadButton");
+
+            showLoader();
+            uploadButton.disabled = true; // Disable the upload button
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            fetch('http://192.168.0.75:11000/api/bulk-verify-emails/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.download_url) {
+                    const downloadUrl = data.download_url;
+                    responseLink.href = downloadUrl;
+                    responseLink.style.display = 'block';
+                } else {
+                    console.error('Download URL not provided in the response.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                hideLoader();
+                uploadButton.disabled = false; // Enable the upload button
+            });
+        }
+
+        function uploadBulkFindEmails() {
+            const fileInput = document.getElementById("bulkFindEmailFile");
+            const responseLink = document.getElementById("bulkFindEmailResponse");
+            const uploadButton = document.getElementById("bulkFindUploadButton");
+
+            showLoader(); 
+            uploadButton.disabled = true; // Disable the upload button
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            fetch('http://192.168.0.75:11000/api/find_emails_bulk/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.download_url) {
+                    const downloadUrl = data.download_url;
+                    responseLink.href = downloadUrl;
+                    responseLink.style.display = 'block';
+                } else {
+                    console.error('Download URL not provided in the response.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                hideLoader();
+                uploadButton.disabled = false; // Enable the upload button
+            });
+        }
+
+        // function pollForCompletion(downloadUrl) {
+        //     fetch(downloadUrl)
+        //     .then(response => {
+        //         if (response.status === 200) {
+        //             // The file is ready for download, update the link and allow the user to download
+        //             responseLink.href = downloadUrl;
+        //             responseLink.style.display = 'block';
+        //         } else {
+        //             // The file is not ready, continue polling
+        //             setTimeout(() => pollForCompletion(downloadUrl), 1000); // Poll every 1 second
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.error('Error while polling:', error);
+        //     });
+        // }
+
+        // Function to send a POST request for Single Email Verification
+        function verifySingleEmail() {
+            const emailInput = document.getElementById("singleEmail");
+            const responseText = document.getElementById("singleEmailResponse");
+            const verifybutton = document.getElementById("singleverifybutton");
+
+            const email = emailInput.value;
+            
+            verifybutton.disabled = true; 
+
+            fetch('http://192.168.0.75:11000/api/single-verify-email/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.text())
+            .then(result => {
+                responseText.innerText = result;
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => {
+                hideLoader();
+                verifybutton.disabled = false; // Enable the upload button
+            });
+
+        }
+
+        // Function to send a POST request for Single Email Verification with Name and Domain
+        function findSingleEmail() {
+            const firstNameInput = document.getElementById("singleFirstName");
+            const lastNameInput = document.getElementById("singleLastName");
+            const domainInput = document.getElementById("singleDomain");
+            const responseText = document.getElementById("singleEmailFinderResponse");
+
+            const firstName = firstNameInput.value;
+            const lastName = lastNameInput.value;
+            const domain = domainInput.value;
+
+            fetch('http://192.168.0.75:11000/api/single-find_email/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fname: firstName, lname: lastName, domain: domain })
+            })
+            .then(response => response.text())
+            .then(result => {
+                responseText.innerText = result;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

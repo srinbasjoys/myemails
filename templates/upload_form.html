@@ -1,0 +1,16 @@
+<!-- email_verification/templates/email_verification/upload_form.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Bulk Verification</title>
+</head>
+<body>
+    <h1>Email Bulk Verification</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
